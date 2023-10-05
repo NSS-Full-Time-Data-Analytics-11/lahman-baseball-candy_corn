@@ -220,6 +220,43 @@ USING(playerid)
 
 
 
+-- 10. Find all players who hit their career highest number of home runs in 2016. 
+--Consider only players who have played in the league for at least 10 years, and 
+--who hit at least one home run in 2016. Report the players' first and last names and the 
+--number of home runs they hit in 2016.
+
+WITH stats_2016 AS (SELECT p.namefirst, 
+p.namelast, 
+b.hr AS hit_hr_in_2016,
+EXTRACT(YEAR FROM finalgame::date)- EXTRACT(YEAR FROM debut::date) AS num_of_yrs_playing,
+MAX(b.hr)+MAX(pc.hr) AS career_highest_home_runs
+FROM people AS p INNER JOIN batting as b USING(playerid)
+			     INNER JOIN pitching AS pc ON b.playerid = pc.playerid
+					                    AND b.yearid = pc.yearid
+WHERE  b.hr>=1 AND b.yearid=2016 AND pc.yearid=2016
+GROUP BY p.namefirst, p.namelast, finalgame,debut,b.hr)
+
+SELECT namefirst, namelast, career_highest_home_runs
+FROM stats_2016
+WHERE num_of_yrs_playing >=10
+
+
+
+-- **Open-ended questions**
+
+--11. Is there any correlation between number of wins and team salary? 
+--Use data from 2000 and later to answer this question. As you do this 
+--analysis, keep in mind that salaries across the whole league tend to increase together, so you may want to look on a year-by-year basis.
+
+SELECT s.teamid, s.playerid, s.yearid, s.lgid, MONEY(CAST(s.salary as numeric)) as salary, t.w AS wins
+FROM salaries s
+JOIN teams t
+USING (teamid,yearid)
+WHERE yearid >=2000
+ORDER BY yearid DESC, wins DESC;
+-- I didn't see any major trend indicating the number of wins correlates to salary amount.
+-- It is less about the number of wins but player performance.
+
 
 
 
