@@ -90,8 +90,31 @@ ORDER BY percetage DESC
 LIMIT 1;
 
 
+/*7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
+
+-- largest number of wins for teams that did not win the world series*/
+SELECT teamid, yearid AS year, name AS team_name, w AS wins
+FROM teams
+WHERE yearid >= 1970 AND yearid <= 2016 AND wswin = 'N'
+ORDER BY w DESC;
 
 
+--  Smallest number of wins for a team that DID win the world series
+SELECT teamid, yearid, name, w
+FROM teams
+WHERE yearid >= 1970 AND yearid <= 2016 AND wswin = 'Y'
+ORDER BY w ASC;
+
+-- Determine why the result is a very small number of wins for a world series champion, Then redo the query
+-- Discrepancy created by the 1981 MLB strike
+
+SELECT teamid, yearid, name, w
+FROM teams
+WHERE yearid >= 1970 
+	AND yearid <= 2016 
+	AND wswin = 'Y' 
+	AND yearid <> 1981
+ORDER BY w ASC;
 
 
 /*
@@ -104,6 +127,8 @@ FROM teams
 
 SELECT *
 FROM homegames
+
+
 
 
 /*top 10 avg attaendance*/
@@ -127,43 +152,71 @@ WHERE year='2016' AND games >=10
 ORDER BY avg_attendance ASC
 LIMIT 5 
 
+
+
+
+--9.Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
+
+
+
+WITH al as(SELECT playerid
+			FROM awardsmanagers
+			WHERE lgid = 'AL'
+			AND awardid = 'TSN Manager of the Year'
+		  INTERSECT
+ 	 SELECT playerid
+			FROM awardsmanagers
+			WHERE lgid = 'NL'
+			AND awardid = 'TSN Manager of the Year')
+SELECT DISTINCT(playerid), teamid,
+namelast,
+namefirst,
+awardsmanagers.lgid, yearid,
+name as team_name
+FROM al
+INNER JOIN awardsmanagers USING(playerid)
+INNER JOIN people USING (playerid)
+INNER JOIN managers USING (yearid, playerid)
+INNER JOIN teams USING(yearid, teamid)
+WHERE awardid = 'TSN Manager of the Year'
 /*
 10.  Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league 
 for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home 
 runs they hit in 2016.*/
 
 
-SELECT 
-
-EXTRACT(YEAR FROM finalgame::date)- EXTRACT(YEAR FROM debut::date) AS num_of_yrs_playing
-FROM people AS p INNER JOIN batting as b USING(playerid)
-			     INNER JOIN pitching AS pc USING(playerid)
 
 
 
-WITH stats AS (SELECT p.namefirst, b.playerid, pc.playerid,
+WITH stats_2016 AS (SELECT p.namefirst, 
 p.namelast, 
-SUM(b.hr+pc.hr) AS total_homeruns,
-b.hr,
-EXTRACT(YEAR FROM finalgame::date)- EXTRACT(YEAR FROM debut::date) AS num_of_yrs_playing
+b.yearid,
+pc.yearid,
+EXTRACT(YEAR FROM finalgame::date)- EXTRACT(YEAR FROM debut::date) AS num_of_yrs_playing,
+MAX(b.hr) AS career_highest_home_runs
 FROM people AS p INNER JOIN batting as b USING(playerid)
-			     INNER JOIN pitching AS pc USING(playerid)
-WHERE b.yearid = 2016 AND pc.yearid= 2016  AND b.hr>=1
-GROUP BY p.namefirst, p.namelast, finalgame,debut,b.hr,b.playerid, pc.playerid)
-
+			     INNER JOIN pitching AS pc ON b.playerid = pc.playerid
+					                    AND b.yearid = pc.yearid
+WHERE  b.hr>=1 
+GROUP BY p.namefirst, p.namelast, finalgame,debut,b.hr,b.yearid,pc.yearid
+ORDER BY b.yearid DESC )
 
 SELECT *
-FROM stats 
-WHERE num_of_yrs_playing >=10
+FROM stats_2016
+WHERE num_of_yrs_playing >=10 
 
 
-SELECT SUM(b.hr+pc.hr) AS total_homeruns, b.yearid,p.namefirst,p.namelast
-FROM people AS p INNER JOIN batting as b USING(playerid)
-			     INNER JOIN pitching AS pc USING(playerid)
-WHERE p.namelast = 'Colon' AND namefirst='Bartolo'AND b.yearid=2016 AND pc.yearid=2016
-GROUP BY b.yearid,p.namefirst,p.namelast
-ORDER BY b.yearid ASC
+-
 
 
 
-SELECT EXTRACT(YEAR FROM finalgame::date)- EXTRACT(YEAR FROM debut::date) AS num_of_yrs_playing
+
+
+
+
+
+
+
+
+
+
