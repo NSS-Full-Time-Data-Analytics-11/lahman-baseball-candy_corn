@@ -84,6 +84,10 @@ WHERE yearid >= 1970
 ORDER BY w ASC;
 
 --8. Using the attendance figures from the homegames table, find the teams and parks which had the top five average attendance per game in 2016 (where average attendance is defined as total attendance divided by mumber of games).Only consider parks where there were atleast 1- games played. Report the park name, team name and average attendance. Repeat for the lowest 5 average attendance. 
+SELECT team, park, SUM(attendance)/SUM(games) AS avg_attendance
+FROM homegames
+WHERE games >= 10
+GROUP BY team, park;
 
 --9. Which managers have won the TSN Manager of the Year award in both the National League and the American League? Give their full name and the teams that they were managing when they won the award.
 SELECT namefirst, namelast, name, awardid, a.lgid, a.yearid
@@ -107,7 +111,19 @@ FROM stats_2016
 WHERE num_of_yrs_playing >=10
 
 --11. Is there any correlation between number of wins and team salary? Use data from 2000 and later to answer this question. As you do this analysis, keep in mind that salaries across the whole league tend to increase together, so you may wantt to look on a year-by-year basis.
+SELECT teamid, s.yearid, COUNT(w), SUM(salary)::numeric::money
+FROM salaries AS s INNER JOIN teams AS t USING(teamid)
+WHERE s.yearid >= '2000'
+GROUP BY teamid, s.yearid
+ORDER BY s.yearid
 
+
+SELECT s.teamid, s.playerid, s.yearid, s.lgid, MONEY(CAST(s.salary as numeric)) as salary, t.w AS wins
+FROM salaries s
+JOIN teams t
+USING (teamid,yearid)
+WHERE yearid >=2000
+ORDER BY yearid DESC, wins DESC;
 
 
 			 
