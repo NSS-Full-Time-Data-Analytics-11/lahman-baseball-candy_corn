@@ -1,0 +1,11 @@
+-- 145/146 Years 1871-2016
+SELECT DISTINCT yearid
+FROM managers
+ORDER BY yearid ASC
+LIMIT 1;
+
+
+SELECT DISTINCT yearid
+FROM managers
+ORDER BY yearid DESC
+LIMIT 1;
